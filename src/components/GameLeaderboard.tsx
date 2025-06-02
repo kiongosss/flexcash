@@ -60,6 +60,118 @@ const GameLeaderboard: React.FC = () => {
   // Reference to the scrolling container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Fetch leaderboard data function - defined at component level so it can be called from multiple places
+  const fetchData = async () => {
+    try {
+      // Fetch real data from the API
+      console.log('Fetching leaderboard data from API...');
+      const response = await fetch('/api/leaderboard');
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch leaderboard data');
+      }
+      
+      console.log('Leaderboard data received:', data);
+      
+      if (data.users && Array.isArray(data.users) && data.users.length > 0) {
+        // Map the database users to the format expected by the component
+        const mappedUsers = data.users.map((user: { id: string; handle: string; amountPaid: number; createdAt: string; message?: string }, index: number) => ({
+          id: user.id,
+          username: user.handle,
+          avatar: getAvatarForUser(user.handle), // Generate avatar based on handle
+          points: Math.floor(user.amountPaid * 10), // Convert amount to points
+          prize: user.amountPaid,
+          rank: index + 1,
+          timestamp: user.createdAt,
+          message: user.message || ''
+        }));
+        
+        console.log('Mapped leaderboard users:', mappedUsers);
+        
+        // Update the leaderboard data with real users
+        setLeaderboardData(mappedUsers);
+        
+        // Update the top users carousel with real users
+        setTopUsers(mappedUsers.map((user: User, index: number) => ({
+          ...user,
+          title: `#${index + 1}`
+        })));
+        
+        // Update total users count
+        setTotalUsers(Math.max(10, data.users.length)); // Minimum of 10 for visual effect
+        
+        // Apply the new podium logic: 
+        // - Position #1 (center) always shows the top-paying user
+        // - Positions #2 and #3 only show users who paid $10 or more
+        // - If there aren't enough qualifying users, those positions show placeholder cards
+        
+        // Always have the top-paying user in position #1 (center)
+        const topUser = mappedUsers[0];
+        
+        // Filter users who paid $10 or more (excluding the top user who's already in position #1)
+        const qualifyingUsers = mappedUsers.slice(1).filter((user: User) => user.prize >= 10);
+        console.log('Users who paid $10 or more (excluding top user):', qualifyingUsers);
+        
+        // Prepare the podium array
+        const newPodiumUsers: User[] = [];
+        
+        // Position #2 (left) - Only show if there's a qualifying user
+        if (qualifyingUsers.length > 0) {
+          newPodiumUsers.push({ ...qualifyingUsers[0], rank: 2 });
+        } else {
+          // Empty position #2
+          newPodiumUsers.push({
+            id: 'empty-2',
+            username: 'Your spot!',
+            avatar: '❓',
+            points: 0,
+            prize: 0,
+            rank: 2,
+            message: 'Pay $10+ to claim this spot!',
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        // Position #1 (center) - Always show the top-paying user
+        newPodiumUsers.push({ ...topUser, rank: 1 });
+        
+        // Position #3 (right) - Only show if there's a second qualifying user
+        if (qualifyingUsers.length > 1) {
+          newPodiumUsers.push({ ...qualifyingUsers[1], rank: 3 });
+        } else {
+          // Empty position #3
+          newPodiumUsers.push({
+            id: 'empty-3',
+            username: 'Your spot!',
+            avatar: '❓',
+            points: 0,
+            prize: 0,
+            rank: 3,
+            message: 'Pay $10+ to claim this spot!',
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        // Set the podium users
+        setPodiumUsers(newPodiumUsers);
+        console.log('Set podium users with new logic:', newPodiumUsers);
+        
+        // Show the podium section if we have at least the top user
+        setShowPodium(true);
+      } else {
+        // If no users yet, show empty state
+        console.log('No users found in database');
+        setLeaderboardData([]);
+        setTopUsers([]);
+        setShowPodium(false);
+      }
+    } catch (err) {
+      console.error('Error fetching leaderboard data:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    }
+  };
+
   // Handle checkout process
   const handleCheckout = async () => {
     if (!handle.trim()) {
@@ -110,118 +222,7 @@ const GameLeaderboard: React.FC = () => {
   };
 
   useEffect(() => {
-    // Fetch leaderboard data
-    const fetchData = async () => {
-      try {
-        // Fetch real data from the API
-        console.log('Fetching leaderboard data from API...');
-        const response = await fetch('/api/leaderboard');
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to fetch leaderboard data');
-        }
-        
-        console.log('Leaderboard data received:', data);
-        
-        if (data.users && Array.isArray(data.users) && data.users.length > 0) {
-          // Map the database users to the format expected by the component
-          const mappedUsers = data.users.map((user: { id: string; handle: string; amountPaid: number; createdAt: string; message?: string }, index: number) => ({
-            id: user.id,
-            username: user.handle,
-            avatar: getAvatarForUser(user.handle), // Generate avatar based on handle
-            points: Math.floor(user.amountPaid * 10), // Convert amount to points
-            prize: user.amountPaid,
-            rank: index + 1,
-            timestamp: user.createdAt,
-            message: user.message || ''
-          }));
-          
-          console.log('Mapped leaderboard users:', mappedUsers);
-          
-          // Update the leaderboard data with real users
-          setLeaderboardData(mappedUsers);
-          
-          // Update the top users carousel with real users
-          setTopUsers(mappedUsers.map((user: User, index: number) => ({
-            ...user,
-            title: `#${index + 1}`
-          })));
-          
-          // Update total users count
-          setTotalUsers(Math.max(10, data.users.length)); // Minimum of 10 for visual effect
-          
-          // Apply the new podium logic: 
-          // - Position #1 (center) always shows the top-paying user
-          // - Positions #2 and #3 only show users who paid $10 or more
-          // - If there aren't enough qualifying users, those positions show placeholder cards
-          
-          // Always have the top-paying user in position #1 (center)
-          const topUser = mappedUsers[0];
-          
-          // Filter users who paid $10 or more (excluding the top user who's already in position #1)
-          const qualifyingUsers = mappedUsers.slice(1).filter((user: User) => user.prize >= 10);
-          console.log('Users who paid $10 or more (excluding top user):', qualifyingUsers);
-          
-          // Prepare the podium array
-          const newPodiumUsers: User[] = [];
-          
-          // Position #2 (left) - Only show if there's a qualifying user
-          if (qualifyingUsers.length > 0) {
-            newPodiumUsers.push({ ...qualifyingUsers[0], rank: 2 });
-          } else {
-            // Empty position #2
-            newPodiumUsers.push({
-              id: 'empty-2',
-              username: 'Your spot!',
-              avatar: '❓',
-              points: 0,
-              prize: 0,
-              rank: 2,
-              message: 'Pay $10+ to claim this spot!',
-              timestamp: new Date().toISOString()
-            });
-          }
-          
-          // Position #1 (center) - Always show the top-paying user
-          newPodiumUsers.push({ ...topUser, rank: 1 });
-          
-          // Position #3 (right) - Only show if there's a second qualifying user
-          if (qualifyingUsers.length > 1) {
-            newPodiumUsers.push({ ...qualifyingUsers[1], rank: 3 });
-          } else {
-            // Empty position #3
-            newPodiumUsers.push({
-              id: 'empty-3',
-              username: 'Your spot!',
-              avatar: '❓',
-              points: 0,
-              prize: 0,
-              rank: 3,
-              message: 'Pay $10+ to claim this spot!',
-              timestamp: new Date().toISOString()
-            });
-          }
-          
-          // Set the podium users
-          setPodiumUsers(newPodiumUsers);
-          console.log('Set podium users with new logic:', newPodiumUsers);
-          
-          // Show the podium section if we have at least the top user
-          setShowPodium(true);
-        } else {
-          // If no users yet, show empty state
-          console.log('No users found in database');
-          setLeaderboardData([]);
-          setTopUsers([]);
-          setShowPodium(false);
-        }
-      } catch (err) {
-        console.error('Error fetching leaderboard data:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      }
-    };
-
+    // Call the fetchData function when the component mounts
     fetchData();
 
     // Countdown timer simulation
