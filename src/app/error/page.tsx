@@ -12,9 +12,9 @@ Text Domain:
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 
-export default function ErrorPage() {
+function ErrorContent() {
   const searchParams = useSearchParams();
   const errorType = searchParams.get('type') || 'unknown';
   
@@ -75,5 +75,32 @@ export default function ErrorPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Fallback component to show while the error content is loading
+function ErrorFallback() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#1e2139] p-4" style={{ fontFamily: "'Livvic', sans-serif" }}>
+      <div className="bg-[#2c3252] p-8 rounded-xl shadow-lg max-w-md w-full text-center border border-red-500">
+        <h1 className="text-3xl font-bold text-white mb-3">Loading Error Details...</h1>
+        <div className="flex flex-col space-y-4">
+          <Link 
+            href="/"
+            className="py-3 px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-lg flex items-center justify-center transition-all hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <span>RETURN HOME</span>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ErrorPage() {
+  return (
+    <Suspense fallback={<ErrorFallback />}>
+      <ErrorContent />
+    </Suspense>
   );
 }
