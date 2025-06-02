@@ -1,0 +1,33 @@
+/*
+Project Name: Flexit
+Project URI: 
+Description: A web app where users pay to flex on a public leaderboard
+Version: 1.0.0
+Author: KaseeMoka
+Author URI: https://github.com/kiongosss
+Text Domain: 
+*/
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Use the environment variable
+}
+
+model User {
+  id            String   @id @default(cuid())
+  handle        String   // Social handle or website URL
+  amountPaid    Float    // Amount paid in USD
+  message       String?  // Optional flex message
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  paymentId     String   @unique // Lemon Squeezy payment ID
+  paymentStatus String   // e.g., completed, refunded
+}

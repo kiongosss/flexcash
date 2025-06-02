@@ -1,15 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Livvic:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400;1,500;1,600;1,700;1,900&display=swap');
 @import "tailwindcss";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +21,74 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Hexagon styles for the leaderboard */
+.hexagon-container {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  display: inline-block;
+}
+
+.hexagon {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #2a2a30;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hexagon img {
+  width: 110%;
+  height: 110%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.hexagon-container-small {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  display: inline-block;
+}
+
+.hexagon-small {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #2a2a30;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hexagon-small img {
+  width: 110%;
+  height: 110%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Orange theme for the leaderboard page */
+.orange-theme {
+  background-color: #ff9d2f;
+  background-image: linear-gradient(315deg, #ff9d2f 0%, #ff6126 74%);
+  min-height: 100vh;
+}
+
+/* Hide scrollbar for clean UI */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
