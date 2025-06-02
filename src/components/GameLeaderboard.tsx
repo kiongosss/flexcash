@@ -43,21 +43,8 @@ const GameLeaderboard: React.FC = () => {
   // State for podium users
   const [podiumUsers, setPodiumUsers] = useState<User[]>([]);
 
-  // Mock data for the top users in the header - these represent users whose payments have been captured
-  const topUsers: User[] = [
-    { id: '1', username: 'Dinotox', title: '#1', avatar: '🦖', points: 1200, prize: 49.99, timestamp: '2025-06-01T10:15:22' },
-    { id: '2', username: 'Astropower', title: '#2', avatar: '🚀', points: 100, prize: 39.99, timestamp: '2025-06-01T11:23:45' },
-    { id: '3', username: 'Chronol', title: '#3', avatar: '⏱️', points: 150, prize: 29.99, timestamp: '2025-06-01T12:05:18' },
-    { id: '4', username: 'Ficaresque', title: '#4', avatar: '🔥', points: 750, prize: 24.99, timestamp: '2025-06-01T12:45:33' },
-    { id: '5', username: 'Markshower', title: '#5', avatar: '🎯', points: 640, prize: 19.99, timestamp: '2025-06-01T13:12:07' },
-    { id: '6', username: 'Eramind', title: '#6', avatar: '🧠', points: 320, prize: 14.99, timestamp: '2025-06-01T13:38:42' },
-    { id: '7', username: 'Skynet', title: '#7', avatar: '🌌', points: 280, prize: 12.99, timestamp: '2025-06-01T14:02:19' },
-    { id: '8', username: 'CryptoKing', title: '#8', avatar: '💰', points: 890, prize: 9.99, timestamp: '2025-06-01T14:25:51' },
-    { id: '9', username: 'NeonRider', title: '#9', avatar: '🏍️', points: 420, prize: 7.99, timestamp: '2025-06-01T15:08:33' },
-    { id: '10', username: 'PixelWizard', title: '#10', avatar: '🧙', points: 560, prize: 5.99, timestamp: '2025-06-01T15:42:17' },
-    { id: '11', username: 'ShadowHunter', title: '#11', avatar: '👤', points: 380, prize: 4.99, timestamp: '2025-06-01T16:15:08' },
-    { id: '12', username: 'GalaxyQueen', title: '#12', avatar: '👑', points: 950, prize: 3.99, timestamp: '2025-06-01T17:22:45' },
-  ];
+  // We'll populate this with real data from the API
+  const [topUsers, setTopUsers] = useState<User[]>([]);
 
   // Function to generate an avatar emoji based on the user's handle
   const getAvatarForUser = (handle: string): string => {
@@ -76,23 +63,7 @@ const GameLeaderboard: React.FC = () => {
     return avatars[sum % avatars.length];
   };
   
-  // Fallback podium data if we don't have enough real users
-  const fallbackPodiumUsers: User[] = [
-    { id: '8', username: 'Skulldugger', avatar: '💀', points: 500, prize: 199.99, rank: 2, timestamp: '2025-06-01T08:15:30', message: 'Best gaming setup ever!' },
-    { id: '9', username: 'Klaxxon', avatar: '👾', points: 1500, prize: 499.99, rank: 1, timestamp: '2025-06-01T07:22:45', message: 'Top player in the world!' },
-    { id: '10', username: 'Ultralex', avatar: '🦍', points: 250, prize: 99.99, rank: 3, timestamp: '2025-06-01T09:08:12', message: 'Coming for the crown!' },
-  ];
-
-  // Mock data for the table
-  const tableUsers: User[] = [
-    { id: '11', username: 'Protesian', avatar: '👽', points: 420, prize: 12.49, rank: 4, timestamp: '2025-06-01T08:15:30', message: 'Best gaming setup ever!' },
-    { id: '12', username: 'Protesian', avatar: '👽', points: 380, prize: 12.49, rank: 5, timestamp: '2025-06-01T09:22:15', message: 'Coming for the top spot!' },
-    { id: '13', username: 'Protesian', avatar: '👽', points: 350, prize: 12.49, rank: 6, timestamp: '2025-06-01T10:05:45', message: 'Watch me climb!' },
-    { id: '14', username: 'CyberNinja', avatar: '🤖', points: 320, prize: 9.99, rank: 7, timestamp: '2025-06-01T11:32:18', message: 'Stealth mode activated' },
-    { id: '15', username: 'VortexQueen', avatar: '👸', points: 300, prize: 9.99, rank: 8, timestamp: '2025-06-01T12:45:33', message: 'Spinning to the top!' },
-    { id: '16', username: 'TechMage', avatar: '🧙', points: 280, prize: 7.99, rank: 9, timestamp: '2025-06-01T13:18:27', message: 'Casting spells of success' },
-    { id: '17', username: 'QuantumLeaper', avatar: '🚀', points: 260, prize: 7.99, rank: 10, timestamp: '2025-06-01T14:05:52', message: 'Jumping through dimensions' },
-  ];
+  // We'll only use real data from the API, no fallback or mock data
 
   // Reference to the scrolling container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -156,9 +127,9 @@ const GameLeaderboard: React.FC = () => {
         
         console.log('Leaderboard data received:', data);
         
-        if (data.users && Array.isArray(data.users)) {
+        if (data.users && Array.isArray(data.users) && data.users.length > 0) {
           // Map the database users to the format expected by the component
-          const mappedUsers = data.users.map((user: any, index: number) => ({
+          const mappedUsers = data.users.map((user: { id: string; handle: string; amountPaid: number; createdAt: string; message?: string }, index: number) => ({
             id: user.id,
             username: user.handle,
             avatar: getAvatarForUser(user.handle), // Generate avatar based on handle
@@ -174,29 +145,112 @@ const GameLeaderboard: React.FC = () => {
           // Update the leaderboard data with real users
           setLeaderboardData(mappedUsers);
           
+          // Update the top users carousel with real users
+          setTopUsers(mappedUsers.map((user: User, index: number) => ({
+            ...user,
+            title: `#${index + 1}`
+          })));
+          
           // Update total users count
-          setTotalUsers(prev => Math.max(prev, data.users.length + 10)); // Add some buffer for visual effect
+          setTotalUsers(Math.max(10, data.users.length)); // Minimum of 10 for visual effect
           
           // If we have enough users, update the podium users
           if (mappedUsers.length >= 3) {
             // Update podium with top 3 users - ensure message field is included
             const newPodiumUsers = [
-              { ...mappedUsers[1], rank: 2, message: mappedUsers[1].message || 'Coming for the top spot!' },
-              { ...mappedUsers[0], rank: 1, message: mappedUsers[0].message || 'Top player in the world!' },
-              { ...mappedUsers[2], rank: 3, message: mappedUsers[2].message || 'Coming for the crown!' }
+              { ...mappedUsers[1], rank: 2 },
+              { ...mappedUsers[0], rank: 1 },
+              { ...mappedUsers[2], rank: 3 }
             ];
             setPodiumUsers(newPodiumUsers);
             console.log('Set podium users with real data:', newPodiumUsers);
-          } else {
-            // Not enough users for a full podium, use fallback data
-            setPodiumUsers(fallbackPodiumUsers);
-            console.log('Not enough users for podium, using fallback data');
+          } else if (mappedUsers.length === 2) {
+            // Only 2 users
+            const newPodiumUsers = [
+              { ...mappedUsers[1], rank: 2 },
+              { ...mappedUsers[0], rank: 1 },
+              // Create an empty third position
+              {
+                id: 'empty-3',
+                username: 'Your spot!',
+                avatar: '❓',
+                points: 0,
+                prize: 0,
+                rank: 3,
+                message: 'This could be you!',
+                timestamp: new Date().toISOString()
+              }
+            ];
+            setPodiumUsers(newPodiumUsers);
+          } else if (mappedUsers.length === 1) {
+            // Only 1 user
+            const newPodiumUsers = [
+              // Create an empty second position
+              {
+                id: 'empty-2',
+                username: 'Your spot!',
+                avatar: '❓',
+                points: 0,
+                prize: 0,
+                rank: 2,
+                message: 'This could be you!',
+                timestamp: new Date().toISOString()
+              },
+              { ...mappedUsers[0], rank: 1 },
+              // Create an empty third position
+              {
+                id: 'empty-3',
+                username: 'Your spot!',
+                avatar: '❓',
+                points: 0,
+                prize: 0,
+                rank: 3,
+                message: 'This could be you!',
+                timestamp: new Date().toISOString()
+              }
+            ];
+            setPodiumUsers(newPodiumUsers);
           }
         } else {
-          // If no users yet, use the mock data
-          console.log('No users found in database, using mock data');
-          setLeaderboardData([...tableUsers]);
-          setPodiumUsers(fallbackPodiumUsers);
+          // If no users yet, show empty state
+          console.log('No users found in database');
+          setLeaderboardData([]);
+          
+          // Create empty podium
+          const emptyPodium = [
+            {
+              id: 'empty-2',
+              username: 'Your spot!',
+              avatar: '❓',
+              points: 0,
+              prize: 0,
+              rank: 2,
+              message: 'Be the first to claim your spot!',
+              timestamp: new Date().toISOString()
+            },
+            {
+              id: 'empty-1',
+              username: 'Top position',
+              avatar: '👑',
+              points: 0,
+              prize: 0,
+              rank: 1,
+              message: 'Claim the throne!',
+              timestamp: new Date().toISOString()
+            },
+            {
+              id: 'empty-3',
+              username: 'Your spot!',
+              avatar: '❓',
+              points: 0,
+              prize: 0,
+              rank: 3,
+              message: 'Make your mark!',
+              timestamp: new Date().toISOString()
+            }
+          ];
+          setPodiumUsers(emptyPodium);
+          setTopUsers([]);
         }
       } catch (err) {
         console.error('Error fetching leaderboard data:', err);
@@ -461,7 +515,7 @@ const GameLeaderboard: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {tableUsers.map((user) => (
+            {leaderboardData.map((user: User) => (
               <tr key={user.id} className="border-b border-[#2c3252]">
                 <td className="py-3 px-4">
                   <div className="bg-[#2c3252] rounded-lg px-2 py-1 inline-flex items-center">
