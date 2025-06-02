@@ -255,9 +255,44 @@ const GameLeaderboard: React.FC = () => {
       } catch (err) {
         console.error('Error fetching leaderboard data:', err);
         setError('Failed to load leaderboard data');
-        // Fall back to mock data
-        setLeaderboardData([...tableUsers]);
-        setPodiumUsers(fallbackPodiumUsers);
+        // Set empty data on error
+        setLeaderboardData([]);
+        
+        // Create empty podium for error state
+        const errorPodium = [
+          {
+            id: 'error-2',
+            username: 'Error',
+            avatar: '❌',
+            points: 0,
+            prize: 0,
+            rank: 2,
+            message: 'Failed to load data',
+            timestamp: new Date().toISOString()
+          },
+          {
+            id: 'error-1',
+            username: 'Error',
+            avatar: '❌',
+            points: 0,
+            prize: 0,
+            rank: 1,
+            message: 'Failed to load data',
+            timestamp: new Date().toISOString()
+          },
+          {
+            id: 'error-3',
+            username: 'Error',
+            avatar: '❌',
+            points: 0,
+            prize: 0,
+            rank: 3,
+            message: 'Failed to load data',
+            timestamp: new Date().toISOString()
+          }
+        ];
+        setPodiumUsers(errorPodium);
+        setTopUsers([]);
       }
     };
 
