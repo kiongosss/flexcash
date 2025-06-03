@@ -56,7 +56,7 @@ export async function createCheckout(options: CheckoutOptions): Promise<Checkout
     
     // Use the direct product URL with custom parameters
     // This is the most reliable approach for Lemon Squeezy checkouts
-    const baseProductUrl = 'https://masokotools.lemonsqueezy.com/buy/ee36e0a3-0a03-4ae1-a907-6cd80693a1de';
+    const baseProductUrl = 'https://masokotools.lemonsqueezy.com/buy/2ae69963-e9d1-41f8-b5e2-7c86ab617eed';
     
     // Add custom parameters to the URL
     const checkoutUrl = `${baseProductUrl}?checkout[custom][handle]=${encodeURIComponent(options.handle)}&checkout[custom][message]=${encodeURIComponent(options.message || '')}&checkout[custom_price]=${amountInCents}&checkout[redirect_url]=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL}/success`)}`;
@@ -182,31 +182,56 @@ async function handleOrderCreated(event: any): Promise<WebhookEventData> {
     console.log('Processing order created event');
     console.log('Full event data:', JSON.stringify(event, null, 2));
     
-    // Extract data from the event
+    // Extract custom data from the event
     const orderId = event.data?.id;
     const orderData = event.data?.attributes || {};
+    
+    console.log('Full order data:', JSON.stringify(orderData, null, 2));
     
     // Extract custom data from the checkout data or custom parameters
     // Lemon Squeezy can store custom data in different places depending on how the checkout was created
     const checkoutData = orderData.checkout_data || {};
+    console.log('Checkout data:', JSON.stringify(checkoutData, null, 2));
+    
     let customData = checkoutData.custom || {};
+    console.log('Initial custom data:', JSON.stringify(customData, null, 2));
     
     // If we don't have custom data in the expected location, try to parse it from custom_data
     if (!customData.handle && !customData.message) {
+      console.log('Custom data not found in checkout_data.custom, checking alternative locations');
+      
+      // Check for data in checkout_data.custom_fields
+      if (checkoutData.custom_fields) {
+        console.log('Found checkout_data.custom_fields:', JSON.stringify(checkoutData.custom_fields, null, 2));
+        customData = { ...customData, ...checkoutData.custom_fields };
+      }
+      
+      // Check for data in custom_data
       try {
-        // Check if there's a custom_data field that might contain our data
         if (orderData.custom_data) {
+          console.log('Found custom_data:', typeof orderData.custom_data, orderData.custom_data);
+          
           // Try to parse it if it's a string
           if (typeof orderData.custom_data === 'string') {
-            customData = JSON.parse(orderData.custom_data);
+            const parsedData = JSON.parse(orderData.custom_data);
+            console.log('Parsed custom_data:', parsedData);
+            customData = { ...customData, ...parsedData };
           } else {
-            customData = orderData.custom_data;
+            customData = { ...customData, ...orderData.custom_data };
           }
         }
       } catch (e) {
         console.error('Error parsing custom data:', e);
       }
+      
+      // Check for data directly in the order attributes
+      if (orderData.custom_message) {
+        console.log('Found custom_message in order attributes:', orderData.custom_message);
+        customData.message = orderData.custom_message;
+      }
     }
+    
+    console.log('Final custom data after all checks:', JSON.stringify(customData, null, 2));
     
     // Get the user name as a fallback for handle
     const userName = orderData.user_name || '';
