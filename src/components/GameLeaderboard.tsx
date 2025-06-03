@@ -262,9 +262,9 @@ const GameLeaderboard: React.FC = () => {
       } catch (err) {
         console.error('Error fetching leaderboard data:', err);
         setError('Failed to load leaderboard data');
-        // Fall back to mock data
-        setLeaderboardData([...tableUsers]);
-        setPodiumUsers(fallbackPodiumUsers);
+        // Use empty arrays instead of mock data
+        setLeaderboardData([]);
+        setPodiumUsers([]);
       }
     };
 
